@@ -4,6 +4,7 @@
   import { invoke } from '@tauri-apps/api/core';
   import { open, save } from '@tauri-apps/plugin-dialog';
   import { listen } from '@tauri-apps/api/event';
+  import { getCurrentWebview } from '@tauri-apps/api/webview';
   import { Store } from '@tauri-apps/plugin-store';
   import { appStore, createDefaultSettings } from '$lib/stores/app';
   import type { TabState, AppSettings, Theme } from '$lib/stores/app';
@@ -16,6 +17,7 @@
   import StatusBar from '$lib/components/StatusBar.svelte';
   import SettingsPanel from '$lib/components/SettingsPanel.svelte';
   import FileChangedNotification from '$lib/components/FileChangedNotification.svelte';
+  import GoToLine from '$lib/components/GoToLine.svelte';
 
   // Reactive state via writable stores (imported with $ syntax)
   let tabs = $state<TabState[]>([]);
@@ -26,7 +28,9 @@
 
   // Local UI state
   let showSettings = $state(false);
+  let showGoToLine = $state(false);
   let editorView = $state<import('@codemirror/view').EditorView | null>(null);
+  let editorScrollPercent = $state(0);
 
   // Derived values from active tab
   let activeTab = $derived(tabs.find((t) => t.id === activeTabId) ?? null);
@@ -45,6 +49,14 @@
   });
   $effect(() => {
     appStore.activeTabId.set(activeTabId);
+  });
+
+  // Dynamic window title
+  $effect(() => {
+    const title = activeTab
+      ? `NoteForge — ${activeTab.fileName}`
+      : 'NoteForge';
+    invoke('set_window_title', { title }).catch(() => {});
   });
 
   // Subscribe to stores (for settings, recentFiles, fileChangedNotification)
@@ -132,7 +144,6 @@
         .filter((t) => t.filePath) // only persist tabs with a file path
         .map((t) => ({ filePath: t.filePath, activeTabId: t.id === activeTabId }));
       await store.set('openTabs', JSON.stringify(tabData));
-      await store.set('activeTabId', activeTabId);
       await store.save();
     } catch {
       // persistence may fail
@@ -143,17 +154,33 @@
     try {
       const store = await Store.load('session.json');
       const tabDataStr = await store.get<string>('openTabs');
-      if (!tabDataStr) return;
+      if (!tabDataStr) {
+        // Cold start: no session to restore — open one empty Untitled tab
+        handleNew();
+        return;
+      }
       const tabData: { filePath: string; activeTabId: boolean }[] = JSON.parse(tabDataStr);
+      
+      // Find which tab was active before (by index), since IDs are regenerated
+      let activeIndex = -1;
+      for (let i = 0; i < tabData.length; i++) {
+        if (tabData[i].activeTabId) {
+          activeIndex = i;
+          break;
+        }
+      }
+
       for (const td of tabData) {
         await openFile(td.filePath);
       }
-      const savedActiveId = await store.get<string>('activeTabId');
-      if (savedActiveId && tabs.find((t) => t.id === savedActiveId)) {
-        activeTabId = savedActiveId;
+
+      // Set active tab by index, not by old ID
+      if (activeIndex >= 0 && activeIndex < tabs.length) {
+        activeTabId = tabs[activeIndex].id;
       }
     } catch {
-      // session may not exist on first launch
+      // session may not exist on first launch — open empty tab
+      handleNew();
     }
   }
 
@@ -316,6 +343,12 @@
   }
 
   function handleCloseTab(id: string) {
+    const tab = tabs.find((t) => t.id === id);
+    if (tab?.isDirty) {
+      const confirmed = confirm(`${tab.fileName} has unsaved changes. Close anyway?`);
+      if (!confirmed) return;
+    }
+
     const idx = tabs.findIndex((t) => t.id === id);
     tabs = tabs.filter((t) => t.id !== id);
 
@@ -378,6 +411,27 @@
 
   function openSettingsPanel() {
     showSettings = true;
+  }
+
+  function zoomIn() {
+    const newSize = Math.min(settings.fontSize + 2, 72);
+    settings = { ...settings, fontSize: newSize };
+    appStore.settings.set(settings);
+  }
+
+  function zoomOut() {
+    const newSize = Math.max(settings.fontSize - 2, 8);
+    settings = { ...settings, fontSize: newSize };
+    appStore.settings.set(settings);
+  }
+
+  function zoomReset() {
+    settings = { ...settings, fontSize: createDefaultSettings().fontSize };
+    appStore.settings.set(settings);
+  }
+
+  function toggleGoToLine() {
+    showGoToLine = !showGoToLine;
   }
 
   // =====================
@@ -457,36 +511,60 @@
       e.preventDefault();
       if (activeTabId) handleCloseTab(activeTabId);
     }
+    // Ctrl+T — New tab
+    if (ctrl && !e.shiftKey && e.key === 't') {
+      e.preventDefault();
+      handleNew();
+    }
+    // Ctrl+G — Go to line
+    if (ctrl && !e.shiftKey && e.key === 'g') {
+      e.preventDefault();
+      toggleGoToLine();
+    }
+    // Ctrl++ — Zoom in (increase font size)
+    if (ctrl && !e.shiftKey && (e.key === '=' || e.key === '+')) {
+      e.preventDefault();
+      zoomIn();
+    }
+    // Ctrl+- — Zoom out (decrease font size)
+    if (ctrl && !e.shiftKey && e.key === '-') {
+      e.preventDefault();
+      zoomOut();
+    }
+    // Ctrl+0 — Reset zoom
+    if (ctrl && !e.shiftKey && e.key === '0') {
+      e.preventDefault();
+      zoomReset();
+    }
   }
 
   // =====================
-  // Drag & Drop
+  // Drag & Drop (via Tauri native API)
   // =====================
 
   let isDragging = $state(false);
 
-  function handleDragOver(e: DragEvent) {
-    e.preventDefault();
-    isDragging = true;
-  }
-
-  function handleDragLeave() {
-    isDragging = false;
-  }
-
-  async function handleDrop(e: DragEvent) {
-    e.preventDefault();
-    isDragging = false;
-    const files = e.dataTransfer?.files;
-    if (files && files.length > 0) {
-      // On Tauri, dropped files provide a path
-      const file = files[0];
-      const path = (file as any).path as string | undefined;
-      if (path) {
-        await openFile(path);
+  onMount(() => {
+    // Use Tauri's native drag-drop event — HTML5 file.path is undefined in modern browsers
+    const unlistenDragDrop = getCurrentWebview().onDragDropEvent((event) => {
+      if (event.payload.type === 'over') {
+        isDragging = true;
+      } else if (event.payload.type === 'drop') {
+        isDragging = false;
+        const paths = event.payload.paths;
+        if (paths && paths.length > 0) {
+          openFile(paths[0]);
+        }
+      } else {
+        // 'cancel'
+        isDragging = false;
       }
-    }
-  }
+    });
+
+    return () => {
+      unlistenDragDrop.then((fn) => fn());
+    };
+  });
 
   // Set editor ref for FindReplace
   function handleEditorViewCreated(view: import('@codemirror/view').EditorView) {
@@ -498,10 +576,7 @@
 
 <div
   class="app-shell flex flex-col h-screen overflow-hidden"
-  style="background-color: var(--bg); color: var(--text);"
-  ondragover={handleDragOver}
-  ondragleave={handleDragLeave}
-  ondrop={handleDrop}
+  style="color: var(--text);"
   role="application"
 >
   {#if isDragging}
@@ -535,6 +610,7 @@
     activeTabId={activeTabId}
     onSwitchTab={(id) => { activeTabId = id; }}
     onCloseTab={handleCloseTab}
+    onNewTab={handleNew}
   />
 
   <div class="flex flex-1 min-h-0">
@@ -548,10 +624,11 @@
             onContentChange={handleContentChange}
             theme={settings.theme}
             onViewReady={handleEditorViewCreated}
+            onScrollChange={(pct) => { editorScrollPercent = pct; }}
           />
           {#if settings.showPreview}
             <div class="w-1/2 min-w-0 overflow-hidden">
-              <PreviewPanel content={activeContent} />
+              <PreviewPanel content={activeContent} scrollPercent={editorScrollPercent} />
             </div>
           {/if}
         </div>
@@ -588,5 +665,11 @@
     notification={fileChangedNotif}
     onReload={handleReloadFile}
     onIgnore={handleIgnoreFileChange}
+  />
+
+  <GoToLine
+    visible={showGoToLine}
+    editorView={editorView}
+    onClose={toggleGoToLine}
   />
 </div>

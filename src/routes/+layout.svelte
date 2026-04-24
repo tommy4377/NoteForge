@@ -5,6 +5,7 @@
   import { browser } from '$app/environment';
   import { Store } from '@tauri-apps/plugin-store';
   import type { AppSettings } from '$lib/stores/app';
+  import CustomTitlebar from '$lib/components/CustomTitlebar.svelte';
 
   let { children }: { children: Snippet } = $props();
 
@@ -42,4 +43,5 @@
   });
 </script>
 
+<CustomTitlebar />
 {@render children()}

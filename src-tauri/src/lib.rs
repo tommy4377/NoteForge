@@ -1,8 +1,10 @@
 mod commands {
     pub mod file_cmds;
     pub mod pdf_cmd;
+    pub mod platform_cmds;
     pub mod recent_cmds;
     pub mod watcher_cmd;
+    pub mod window_cmds;
 }
 
 use commands::watcher_cmd::FileWatcherState;
@@ -25,10 +27,12 @@ pub fn run() {
             commands::file_cmds::save_file,
             commands::file_cmds::get_file_language,
             commands::pdf_cmd::export_pdf,
+            commands::platform_cmds::reveal_in_explorer,
             commands::recent_cmds::get_recent_files,
             commands::recent_cmds::add_recent_file,
             commands::watcher_cmd::start_file_watcher,
             commands::watcher_cmd::stop_file_watcher,
+            commands::window_cmds::set_window_title,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
