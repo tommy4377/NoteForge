@@ -1,14 +1,14 @@
-# NoteForge v0.3.0
+# NoteForge v0.4.0
 
-Native file workflow and editor reliability
+Desktop polish and custom shell
 
 ## Highlights
 
-- Native drag and drop file opening
-- Session restore for previously open tabs
-- PDF export workflow
-- Go to line and workspace zoom controls
-- Synchronized editor/preview scrolling and syntax highlighting
+- Custom frameless titlebar and app icon
+- JetBrains Mono focused visual system
+- Improved dark-theme contrast
+- Ctrl+scroll workspace zoom
+- Release-size optimizations
 
 ## Requirements
 

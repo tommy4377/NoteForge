@@ -30,7 +30,7 @@ export interface AppSettings {
 
 export function createDefaultSettings(): AppSettings {
   return {
-    fontFamily: '"Cascadia Code", "Fira Code", "Consolas", monospace',
+    fontFamily: '"JetBrains Mono", "Cascadia Code", "Fira Code", "Consolas", monospace',
     fontSize: 14,
     theme: 'light',
     autosaveInterval: 0,
@@ -40,6 +40,10 @@ export function createDefaultSettings(): AppSettings {
     showFindReplace: false,
   };
 }
+
+// Zoom level store: percentage multiplier (100 = normal, 50 = min, 200 = max)
+// Step size of 10 on each scroll tick
+export const zoomLevel = writable<number>(100);
 
 // We use Svelte writable stores for cross-component reactivity in Svelte 5
 // These can be imported and used with $store syntax in .svelte files

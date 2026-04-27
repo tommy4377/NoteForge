@@ -1,6 +1,6 @@
 [package]
 name = "noteforge"
-version = "0.3.0"
+version = "0.4.0"
 description = "Lightweight desktop text and Markdown editor"
 authors = ["tommy4377"]
 license = "MIT"
@@ -32,4 +32,12 @@ tauri-plugin-process = "2.3.1"
 notify = "8.2.0"
 encoding_rs = "0.8.35"
 chardetng = "1.0.0"
+
+[profile.release]
+opt-level = "z"
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = "symbols"
+incremental = false
 

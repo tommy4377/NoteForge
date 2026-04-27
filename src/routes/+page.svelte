@@ -6,7 +6,7 @@
   import { listen } from '@tauri-apps/api/event';
   import { getCurrentWebview } from '@tauri-apps/api/webview';
   import { Store } from '@tauri-apps/plugin-store';
-  import { appStore, createDefaultSettings } from '$lib/stores/app';
+  import { appStore, createDefaultSettings, zoomLevel } from '$lib/stores/app';
   import type { TabState, AppSettings, Theme } from '$lib/stores/app';
 
   import MenuBar from '$lib/components/MenuBar.svelte';
@@ -531,10 +531,11 @@
       e.preventDefault();
       zoomOut();
     }
-    // Ctrl+0 — Reset zoom
+    // Ctrl+0 — Reset zoom and font size
     if (ctrl && !e.shiftKey && e.key === '0') {
       e.preventDefault();
       zoomReset();
+      zoomLevel.set(100);
     }
   }
 
@@ -617,17 +618,20 @@
     {#if activeTab}
       <div class="flex flex-col flex-1 min-w-0">
         <div class="flex flex-1 min-h-0">
-          <EditorArea
-            content={activeContent}
-            language={activeLanguage}
-            wordWrap={settings.wordWrap}
-            onContentChange={handleContentChange}
-            theme={settings.theme}
-            onViewReady={handleEditorViewCreated}
-            onScrollChange={(pct) => { editorScrollPercent = pct; }}
-          />
+          <div class="editor-wrapper flex-1 min-w-0 overflow-hidden" style="background-color: var(--editor-bg);">
+            <EditorArea
+              content={activeContent}
+              language={activeLanguage}
+              wordWrap={settings.wordWrap}
+              onContentChange={handleContentChange}
+              theme={settings.theme}
+              onViewReady={handleEditorViewCreated}
+              onScrollChange={(pct) => { editorScrollPercent = pct; }}
+            />
+          </div>
           {#if settings.showPreview}
-            <div class="w-1/2 min-w-0 overflow-hidden">
+            <div class="divider-vertical" style="background-color: var(--divider-color);"></div>
+            <div class="w-1/2 min-w-0 overflow-hidden" style="background-color: var(--preview-bg);">
               <PreviewPanel content={activeContent} scrollPercent={editorScrollPercent} />
             </div>
           {/if}
