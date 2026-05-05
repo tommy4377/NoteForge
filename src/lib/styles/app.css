@@ -277,8 +277,9 @@ body, input, textarea, select, button, .menu-bar, .tab-bar,
   overflow-x: auto;
 }
 
-/* Print stylesheet — hide everything except the preview when printing */
+/* Obsidian-style Print — clean Document Mode for PDF export */
 @media print {
+  /* Hide ALL UI chrome */
   .titlebar,
   .menu-bar,
   .tab-bar,
@@ -287,24 +288,160 @@ body, input, textarea, select, button, .menu-bar, .tab-bar,
   .find-replace,
   .settings-panel,
   .file-changed-notification,
-  .app-shell > .fixed {
+  .app-shell > .fixed,
+  .context-menu,
+  .context-menu-overlay,
+  .help-overlay,
+  .help-panel,
+  .divider-vertical,
+  .go-to-line {
     display: none !important;
   }
 
+  /* Document Mode: pure white, full page */
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: white !important;
+    color: black !important;
+  }
+
+  /* The app shell becomes transparent */
+  #app {
+    margin: 0;
+    padding: 0;
+    border-radius: 0;
+    background: transparent !important;
+    transform: none !important;
+  }
+
+  .workspace-zoom {
+    zoom: 100% !important;
+  }
+
+  /* Preview panel becomes the document */
   .preview-panel {
     position: static !important;
     width: 100% !important;
     height: auto !important;
+    max-width: none !important;
     overflow: visible !important;
     border: none !important;
     background: white !important;
     color: black !important;
-    padding: 0 !important;
+    padding: 2cm !important;
+    font-size: 12pt !important;
+    line-height: 1.6 !important;
   }
 
-  .preview-panel pre,
+  /* Typography for print */
+  .preview-panel h1 {
+    font-size: 24pt !important;
+    margin-top: 0 !important;
+    margin-bottom: 12pt !important;
+    border-bottom: 1pt solid black !important;
+    padding-bottom: 6pt !important;
+  }
+  .preview-panel h2 {
+    font-size: 18pt !important;
+    margin-top: 18pt !important;
+    margin-bottom: 10pt !important;
+    border-bottom: 0.5pt solid black !important;
+    padding-bottom: 4pt !important;
+  }
+  .preview-panel h3 {
+    font-size: 14pt !important;
+    margin-top: 14pt !important;
+    margin-bottom: 8pt !important;
+  }
+
+  .preview-panel p {
+    margin: 8pt 0 !important;
+    line-height: 1.6 !important;
+    orphans: 3;
+    widows: 3;
+  }
+
+  /* Code blocks — high contrast for print */
+  .preview-panel pre {
+    background: #f5f5f5 !important;
+    color: black !important;
+    border: 1px solid #ddd !important;
+    padding: 12pt !important;
+    font-size: 10pt !important;
+    line-height: 1.4 !important;
+    overflow-x: visible !important;
+    page-break-inside: avoid;
+  }
+
   .preview-panel code {
     background: #f5f5f5 !important;
     color: black !important;
+    padding: 2pt 4pt !important;
+    font-size: 10pt !important;
+  }
+
+  .preview-panel pre code {
+    background: none !important;
+    padding: 0 !important;
+  }
+
+  /* Blockquotes */
+  .preview-panel blockquote {
+    border-left: 3pt solid black !important;
+    margin: 12pt 0 !important;
+    padding: 8pt 12pt !important;
+    background: #f5f5f5 !important;
+  }
+
+  /* Tables */
+  .preview-panel table {
+    border-collapse: collapse !important;
+    width: 100% !important;
+    margin: 12pt 0 !important;
+    page-break-inside: avoid;
+  }
+  .preview-panel th,
+  .preview-panel td {
+    border: 1px solid black !important;
+    padding: 6pt 10pt !important;
+    text-align: left;
+  }
+  .preview-panel th {
+    background: #f0f0f0 !important;
+    font-weight: 600 !important;
+  }
+
+  /* KaTeX formulas — render correctly for print */
+  .preview-panel .katex-display {
+    margin: 12pt 0 !important;
+    overflow-x: auto;
+    page-break-inside: avoid;
+  }
+  :global(.katex) {
+    color: black !important;
+    font-size: 1.1em !important;
+  }
+  :global(.katex-display) > .katex {
+    color: black !important;
+  }
+
+  /* Links */
+  .preview-panel a {
+    color: black !important;
+    text-decoration: underline !important;
+  }
+
+  /* Images */
+  .preview-panel img {
+    max-width: 100% !important;
+    page-break-inside: avoid;
+  }
+
+  /* Page breaks */
+  .preview-panel h1,
+  .preview-panel h2,
+  .preview-panel h3 {
+    page-break-after: avoid;
   }
 }
