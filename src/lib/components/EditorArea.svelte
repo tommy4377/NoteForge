@@ -101,11 +101,8 @@
           '.cm-activeLine': {
             backgroundColor: 'var(--hover-bg)',
           },
-          '.cm-selectionBackground, .cm-focused .cm-selectionBackground': {
-            backgroundColor: 'var(--selection-bg) !important',
-          },
-          '&.cm-focused .cm-selectionBackground': {
-            backgroundColor: 'var(--selection-bg) !important',
+          '.cm-selectionBackground': {
+            backgroundColor: 'var(--selection-bg)' + ' !important',
           },
           '.cm-gutters': {
             display: 'none',
