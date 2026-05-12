@@ -1,4 +1,4 @@
-# NoteForge v0.7.0
+# NoteForge v0.8.0
 
 Premium editing and export experience
 
