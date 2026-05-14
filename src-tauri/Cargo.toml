@@ -1,6 +1,6 @@
 [package]
 name = "noteforge"
-version = "0.8.0"
+version = "0.9.0"
 description = "Lightweight desktop text and Markdown editor"
 authors = ["tommy4377"]
 edition = "2021"
