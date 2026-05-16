@@ -1,6 +1,6 @@
 {
   "name": "noteforge",
-  "version": "0.9.1",
+  "version": "1.0.0",
   "description": "Lightweight desktop text and Markdown editor built with Tauri and Svelte",
   "type": "module",
   "scripts": {
