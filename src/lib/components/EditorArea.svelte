@@ -21,6 +21,7 @@
     onContentChange,
     theme,
     onViewReady,
+    onScrollChange,
   }: {
     content: string;
     language: string;
@@ -28,6 +29,7 @@
     onContentChange: (content: string) => void;
     theme: string;
     onViewReady?: (view: EditorView) => void;
+    onScrollChange?: (scrollPercent: number) => void;
   } = $props();
 
   let editorContainer: HTMLDivElement;
@@ -46,7 +48,9 @@
     }
   }
 
-  function createEditor() {
+  // Create editor with explicit initial doc so the recreate-effect
+  // does NOT need to read the reactive `content` prop.
+  function createEditor(initialDoc: string, lang: string, wrap: boolean, themeName: string) {
     if (!editorContainer) return;
 
     const updateListener = EditorView.updateListener.of((update) => {
@@ -55,14 +59,14 @@
       }
     });
 
-    const themeExt = theme === 'dark' ? [oneDark] : [];
+    const themeExt = themeName === 'dark' ? [oneDark] : [];
 
-    const wrapExt = wordWrap
+    const wrapExt = wrap
       ? [EditorView.lineWrapping]
       : [];
 
     const state = EditorState.create({
-      doc: content,
+      doc: initialDoc,
       extensions: [
         // No line numbers gutter
         history(),
@@ -72,7 +76,7 @@
         indentOnInput(),
         syntaxHighlighting(defaultHighlightStyle, { fallback: true }),
         drawSelection(),
-        getLanguageExtension(language),
+        getLanguageExtension(lang),
         keymap.of([
           ...closeBracketsKeymap,
           ...defaultKeymap,
@@ -115,6 +119,16 @@
       parent: editorContainer,
     });
 
+    // Attach native scroll listener for synchronized scroll
+    if (onScrollChange) {
+      const scroller = view.scrollDOM;
+      scroller.addEventListener('scroll', () => {
+        const maxScroll = scroller.scrollHeight - scroller.clientHeight;
+        const percent = maxScroll > 0 ? scroller.scrollTop / maxScroll : 0;
+        onScrollChange(percent);
+      });
+    }
+
     if (onViewReady && view) {
       onViewReady(view);
     }
@@ -127,29 +141,54 @@
     }
   }
 
+  // Tracks whether the editor has been created at least once
+  // (used to decide whether the recreate-effect should fire)
+  // IMPORTANT: This must NOT be $state — otherwise the first $effect re-runs
+  // when onMount sets it to true, destroying and recreating the editor
+  // and causing focus loss on every keystroke.
+  let editorCreated = false;
+
+  // Non-reactive snapshot of the current content, used by the recreate-effect
+  // so it doesn't need to read the reactive `content` prop (which would cause
+  // the effect to re-fire on every keystroke).
+  let contentSnapshot: string = '';
+
   onMount(() => {
-    createEditor();
+    contentSnapshot = content;
+    createEditor(contentSnapshot, language, wordWrap, theme);
+    editorCreated = true;
   });
 
   onDestroy(() => {
     destroyEditor();
   });
 
-  // Reconfigure when language, wordWrap, or theme changes
+  // Effect 1: recreate editor when language, wordWrap, or theme change.
+  // IMPORTANT: This effect must NOT read `content`, otherwise it fires
+  // on every keystroke, destroying the editor mid-type. Instead, it uses
+  // `contentSnapshot` which is updated by Effect 2 but is not reactive.
   $effect(() => {
     const _lang = language;
     const _wrap = wordWrap;
     const _theme = theme;
 
-    if (view) {
+    // Only recreate after initial mount
+    if (editorCreated) {
+      // Capture current doc from the view before destroying
+      if (view) {
+        contentSnapshot = view.state.doc.toString();
+      }
       destroyEditor();
-      createEditor();
+      createEditor(contentSnapshot, _lang, _wrap, _theme);
     }
   });
 
-  // Update editor content when prop changes (tab switch)
+  // Effect 2: update editor content when the `content` prop changes (tab switch, external reload).
+  // This does NOT recreate the editor — just dispatches a text change.
+  // It also keeps `contentSnapshot` in sync so Effect 1 can use it.
   $effect(() => {
     const newContent = content;
+    contentSnapshot = newContent;
     if (view && view.state.doc.toString() !== newContent) {
       isUpdatingFromProp = true;
       view.dispatch({

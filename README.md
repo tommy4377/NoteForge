@@ -1,14 +1,14 @@
-# NoteForge v0.1.0
+# NoteForge v0.2.0
 
-Core editing foundation
+Native file workflow and editor reliability
 
 ## Highlights
 
-- Multi-tab text editing with CodeMirror 6
-- Open/save workflows with encoding and line-ending metadata
-- Markdown + LaTeX preview
-- Find and replace, themes and status information
-- Rust/Tauri backend for local file operations
+- Native drag and drop file opening
+- Session restore for previously open tabs
+- PDF export workflow
+- Go to line and workspace zoom controls
+- Synchronized editor/preview scrolling and syntax highlighting
 
 ## Requirements
 
