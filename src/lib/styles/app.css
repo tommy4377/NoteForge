@@ -1,0 +1,240 @@
+@import "tailwindcss";
+
+/* Theme CSS Variables */
+:root,
+[data-theme="light"] {
+  --bg: #FFFFFF;
+  --text: #1A1A1A;
+  --secondary: #F5F5F5;
+  --accent: #0066CC;
+  --border: #E0E0E0;
+  --muted: #888888;
+  --hover-bg: #EBEBEB;
+  --active-bg: #D9D9D9;
+  --tab-active-bg: #FFFFFF;
+  --tab-inactive-bg: #E8E8E8;
+  --statusbar-bg: #F0F0F0;
+  --scrollbar-thumb: #C1C1C1;
+  --scrollbar-track: transparent;
+  --selection-bg: rgba(0, 102, 204, 0.25);
+  --shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 4px 12px rgba(0, 0, 0, 0.15);
+  color-scheme: light;
+}
+
+[data-theme="dark"] {
+  --bg: #2D2D2D;
+  --text: #F8F8F2;
+  --secondary: #2B2B2B;
+  --accent: #A6E22E;
+  --border: #444444;
+  --muted: #999999;
+  --hover-bg: #3A3A3A;
+  --active-bg: #4A4A4A;
+  --tab-active-bg: #2D2D2D;
+  --tab-inactive-bg: #222222;
+  --statusbar-bg: #252525;
+  --scrollbar-thumb: #555555;
+  --scrollbar-track: transparent;
+  --selection-bg: rgba(166, 226, 46, 0.25);
+  --shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 4px 12px rgba(0, 0, 0, 0.4);
+  color-scheme: dark;
+}
+
+[data-theme="sepia"] {
+  --bg: #FDF6E3;
+  --text: #5C3D2E;
+  --secondary: #EEE8D5;
+  --accent: #CB4B16;
+  --border: #D5C9A8;
+  --muted: #8B7B6B;
+  --hover-bg: #EEE2C8;
+  --active-bg: #E0D4B8;
+  --tab-active-bg: #FDF6E3;
+  --tab-inactive-bg: #EEE2C8;
+  --statusbar-bg: #F0E8D0;
+  --scrollbar-thumb: #C4B698;
+  --scrollbar-track: transparent;
+  --selection-bg: rgba(203, 75, 22, 0.2);
+  --shadow: 0 1px 3px rgba(92, 61, 46, 0.1);
+  --shadow-lg: 0 4px 12px rgba(92, 61, 46, 0.15);
+  color-scheme: light;
+}
+
+/* Global transition for theme switching */
+*,
+*::before,
+*::after {
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+/* Override properties that shouldn't transition (like editor typing) */
+.cm-editor .cm-content,
+.cm-editor .cm-line {
+  transition: none !important;
+}
+
+/* Base styles */
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow: hidden;
+  font-family: var(--font-family, "Segoe UI", -apple-system, BlinkMacSystemFont, sans-serif);
+  font-size: var(--font-size, 14px);
+  background-color: var(--bg);
+  color: var(--text);
+}
+
+#app {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--scrollbar-track);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--muted);
+}
+
+/* CodeMirror theme overrides */
+.cm-editor {
+  height: 100% !important;
+  font-size: var(--font-size, 14px) !important;
+  font-family: var(--font-family, "Cascadia Code", "Fira Code", "Consolas", monospace) !important;
+}
+
+.cm-editor .cm-scroller {
+  overflow: auto;
+}
+
+.cm-editor.cm-focused {
+  outline: none !important;
+}
+
+.cm-editor .cm-content {
+  caret-color: var(--text) !important;
+}
+
+.cm-editor .cm-selectionBackground,
+.cm-editor.cm-focused .cm-selectionBackground {
+  background-color: var(--selection-bg) !important;
+}
+
+.cm-editor .cm-gutters {
+  background-color: var(--secondary) !important;
+  border-right: 1px solid var(--border) !important;
+  color: var(--muted) !important;
+}
+
+.cm-editor .cm-activeLineGutter {
+  background-color: var(--hover-bg) !important;
+}
+
+.cm-editor .cm-activeLine {
+  background-color: var(--hover-bg) !important;
+}
+
+/* Markdown preview styles */
+.preview-panel {
+  padding: 24px;
+  overflow-y: auto;
+  height: 100%;
+  background-color: var(--bg);
+  color: var(--text);
+}
+
+.preview-panel h1, .preview-panel h2, .preview-panel h3,
+.preview-panel h4, .preview-panel h5, .preview-panel h6 {
+  margin-top: 1em;
+  margin-bottom: 0.5em;
+  font-weight: 600;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 0.3em;
+}
+
+.preview-panel h1 { font-size: 1.8em; }
+.preview-panel h2 { font-size: 1.5em; }
+.preview-panel h3 { font-size: 1.3em; }
+
+.preview-panel p {
+  margin: 0.6em 0;
+  line-height: 1.6;
+}
+
+.preview-panel code {
+  background-color: var(--secondary);
+  padding: 0.15em 0.4em;
+  border-radius: 3px;
+  font-size: 0.9em;
+}
+
+.preview-panel pre {
+  background-color: var(--secondary);
+  padding: 1em;
+  border-radius: 5px;
+  overflow-x: auto;
+}
+
+.preview-panel pre code {
+  background: none;
+  padding: 0;
+}
+
+.preview-panel blockquote {
+  border-left: 4px solid var(--accent);
+  margin: 1em 0;
+  padding: 0.5em 1em;
+  background-color: var(--secondary);
+}
+
+.preview-panel table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 1em 0;
+}
+
+.preview-panel th, .preview-panel td {
+  border: 1px solid var(--border);
+  padding: 0.5em 1em;
+}
+
+.preview-panel th {
+  background-color: var(--secondary);
+  font-weight: 600;
+}
+
+.preview-panel img {
+  max-width: 100%;
+}
+
+.preview-panel a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.preview-panel a:hover {
+  text-decoration: underline;
+}
+
+/* KaTeX display */
+.preview-panel .katex-display {
+  margin: 1em 0;
+  overflow-x: auto;
+}

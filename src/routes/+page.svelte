@@ -4,6 +4,7 @@
   import { invoke } from '@tauri-apps/api/core';
   import { open, save } from '@tauri-apps/plugin-dialog';
   import { listen } from '@tauri-apps/api/event';
+  import { Store } from '@tauri-apps/plugin-store';
   import { appStore, createDefaultSettings } from '$lib/stores/app';
   import type { TabState, AppSettings, Theme } from '$lib/stores/app';
 
@@ -34,11 +35,7 @@
   let activeEncoding = $derived(activeTab?.encoding ?? 'utf-8');
   let activeLineEnding = $derived(activeTab?.lineEnding ?? 'LF');
 
-  let wordCount = $derived(() => {
-    const text = activeContent.trim();
-    if (!text) return 0;
-    return text.split(/\s+/).length;
-  });
+  let wordCount = $derived(activeContent.trim() ? activeContent.trim().split(/\s+/).length : 0);
 
   let charCount = $derived(activeContent.length);
 
@@ -57,6 +54,7 @@
     const unsubNotif = appStore.fileChangedNotification.subscribe((n) => { fileChangedNotif = n; });
 
     loadRecentFiles();
+    restoreTabs();
 
     // Listen for file-changed events from Rust file watcher
     let unlisten: (() => void) | undefined;
@@ -64,11 +62,18 @@
       appStore.fileChangedNotification.set({ path: event.payload.path, visible: true });
     }).then((fn) => { unlisten = fn; });
 
+    // Listen for print trigger events from Rust
+    let unlistenPrint: (() => void) | undefined;
+    listen('trigger-print', () => {
+      window.print();
+    }).then((fn) => { unlistenPrint = fn; });
+
     return () => {
       unsubSettings();
       unsubRecent();
       unsubNotif();
       unlisten?.();
+      unlistenPrint?.();
     };
   });
 
@@ -89,6 +94,7 @@
 
   onDestroy(() => {
     if (autosaveTimer) clearInterval(autosaveTimer);
+    persistTabs();
   });
 
   async function saveDirtyTabs() {
@@ -115,6 +121,39 @@
       appStore.recentFiles.set(files.map((f) => f.path));
     } catch {
       // command may not be available yet
+    }
+  }
+
+  // Persist open tabs to store on close, restore on relaunch
+  async function persistTabs() {
+    try {
+      const store = await Store.load('session.json');
+      const tabData = tabs
+        .filter((t) => t.filePath) // only persist tabs with a file path
+        .map((t) => ({ filePath: t.filePath, activeTabId: t.id === activeTabId }));
+      await store.set('openTabs', JSON.stringify(tabData));
+      await store.set('activeTabId', activeTabId);
+      await store.save();
+    } catch {
+      // persistence may fail
+    }
+  }
+
+  async function restoreTabs() {
+    try {
+      const store = await Store.load('session.json');
+      const tabDataStr = await store.get<string>('openTabs');
+      if (!tabDataStr) return;
+      const tabData: { filePath: string; activeTabId: boolean }[] = JSON.parse(tabDataStr);
+      for (const td of tabData) {
+        await openFile(td.filePath);
+      }
+      const savedActiveId = await store.get<string>('activeTabId');
+      if (savedActiveId && tabs.find((t) => t.id === savedActiveId)) {
+        activeTabId = savedActiveId;
+      }
+    } catch {
+      // session may not exist on first launch
     }
   }
 
@@ -280,11 +319,11 @@
     const idx = tabs.findIndex((t) => t.id === id);
     tabs = tabs.filter((t) => t.id !== id);
 
-    // Stop watcher if closing the active file
-    const closedTab = tabs.find((_, i) => i >= idx) ?? tabs[tabs.length - 1];
     if (tabs.length > 0) {
       if (activeTabId === id) {
-        activeTabId = closedTab?.id ?? tabs[tabs.length - 1]?.id ?? null;
+        // Switch to the nearest tab or the last one available
+        const newIdx = Math.min(idx, tabs.length - 1);
+        activeTabId = tabs[newIdx]?.id ?? tabs[tabs.length - 1].id;
       }
     } else {
       activeTabId = null;
@@ -534,7 +573,7 @@
   </div>
 
   <StatusBar
-    wordCount={wordCount()}
+    wordCount={wordCount}
     charCount={charCount}
     encoding={activeEncoding}
     lineEnding={activeLineEnding}
