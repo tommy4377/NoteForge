@@ -47,7 +47,7 @@ jobs:
           Copy-Item "src-tauri/target/release/noteforge.exe" "release/NoteForge.exe"
 
       - name: Publish GitHub release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           files: release/NoteForge.exe
           generate_release_notes: true
