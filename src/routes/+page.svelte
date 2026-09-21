@@ -504,7 +504,7 @@
       handleSaveAs();
     }
     // Ctrl+Shift+M — Toggle Preview
-    if (ctrl && e.shiftKey && e.key === 'M') {
+    if (ctrl && e.shiftKey && e.key.toLowerCase() === 'm') {
       e.preventDefault();
       togglePreview();
     }
@@ -538,8 +538,8 @@
       e.preventDefault();
       toggleGoToLine();
     }
-    // Ctrl+A — Select All (ensure it works even when editor isn't focused)
-    if (ctrl && !e.shiftKey && e.key === 'a') {
+    // Ctrl+A — Select All
+    if (ctrl && e.key.toLowerCase() === 'a') {
       e.preventDefault();
       if (editorView) {
         editorView.dispatch({ selection: { anchor: 0, head: editorView.state.doc.length } });
@@ -601,3 +601,121 @@
 </script>
 
 <svelte:window onkeydown={handleKeydown} oncontextmenu={handleContextMenu} />
+
+<div
+  class="app-shell flex flex-col h-screen overflow-hidden"
+  style="color: var(--text);"
+  role="application"
+>
+  {#if isDragging}
+    <div class="fixed inset-0 z-40 flex items-center justify-center pointer-events-none"
+         style="background-color: rgba(0, 102, 204, 0.1); border: 3px dashed var(--accent);">
+      <span class="text-lg font-semibold" style="color: var(--accent);">Drop file to open</span>
+    </div>
+  {/if}
+
+  <MenuBar
+    onNew={handleNew}
+    onOpen={handleOpen}
+    onSave={handleSave}
+    onSaveAs={handleSaveAs}
+    onExportPdf={handleExportPdf}
+    onTogglePreview={togglePreview}
+    onToggleFindReplace={toggleFindReplace}
+    onToggleWordWrap={toggleWordWrap}
+    onToggleTheme={cycleTheme}
+    onOpenSettings={openSettingsPanel}
+    onHelp={openHelpPanel}
+    recentFiles={recentFiles}
+    onOpenRecent={handleOpenRecent}
+    showPreview={settings.showPreview}
+    showFindReplace={settings.showFindReplace}
+    wordWrap={settings.wordWrap}
+    currentTheme={settings.theme}
+  />
+
+  <TabBar
+    tabs={tabs}
+    activeTabId={activeTabId}
+    onSwitchTab={(id) => { activeTabId = id; }}
+    onCloseTab={handleCloseTab}
+    onNewTab={handleNew}
+  />
+
+  <div class="flex flex-1 min-h-0">
+    {#if activeTab}
+      <div class="flex flex-col flex-1 min-w-0">
+        <div class="flex flex-1 min-h-0">
+          <div class="editor-wrapper flex-1 min-w-0 overflow-hidden" style="background-color: var(--editor-bg);">
+            <EditorArea
+              content={activeContent}
+              language={activeLanguage}
+              wordWrap={settings.wordWrap}
+              onContentChange={handleContentChange}
+              theme={settings.theme}
+              onViewReady={handleEditorViewCreated}
+              onScrollChange={(pct) => { editorScrollPercent = pct; }}
+            />
+          </div>
+          {#if settings.showPreview}
+            <div class="divider-vertical" style="background-color: var(--divider-color);"></div>
+            <div class="w-1/2 min-w-0 overflow-hidden" style="background-color: var(--preview-bg);">
+              <PreviewPanel content={activeContent} scrollPercent={editorScrollPercent} />
+            </div>
+          {/if}
+        </div>
+
+        <FindReplace
+          visible={settings.showFindReplace}
+          editorView={editorView}
+          onClose={toggleFindReplace}
+        />
+      </div>
+    {:else}
+      <div class="flex-1 flex items-center justify-center" style="color: var(--muted);">
+        <div class="text-center">
+          <p class="text-lg mb-2">Welcome to NoteForge</p>
+          <p class="text-sm">Open a file or press Ctrl+N to create a new one.</p>
+        </div>
+      </div>
+    {/if}
+  </div>
+
+  <StatusBar
+    wordCount={wordCount}
+    charCount={charCount}
+    encoding={activeEncoding}
+    lineEnding={activeLineEnding}
+  />
+
+  <SettingsPanel
+    visible={showSettings}
+    onClose={() => { showSettings = false; }}
+  />
+
+  <FileChangedNotification
+    notification={fileChangedNotif}
+    onReload={handleReloadFile}
+    onIgnore={handleIgnoreFileChange}
+  />
+
+  <GoToLine
+    visible={showGoToLine}
+    editorView={editorView}
+    onClose={toggleGoToLine}
+  />
+
+  <ContextMenu
+    visible={contextMenuState.visible}
+    x={contextMenuState.x}
+    y={contextMenuState.y}
+    onClose={closeContextMenu}
+    onTogglePreview={togglePreview}
+    activeFilePath={activeTab?.filePath ?? ''}
+  />
+
+  <HelpOverlay
+    visible={showHelp}
+    onClose={() => { showHelp = false; }}
+  />
+</div>

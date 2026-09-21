@@ -189,6 +189,12 @@ body, input, textarea, select, button, .menu-bar, .tab-bar,
   background-color: var(--hover-bg) !important;
 }
 
+/* Selection match highlighter */
+.cm-editor .cm-match-highlight {
+  background-color: var(--selection-bg) !important;
+  border-radius: 2px;
+}
+
 /* Markdown preview styles */
 .preview-panel {
   padding: 24px;
