@@ -73,10 +73,10 @@
   });
 </script>
 
-<div class="preview-panel border-l overflow-y-auto h-full"
-     bind:this={panelEl}
-     style="background-color: var(--bg); color: var(--text); border-color: var(--border); width: 100%;">
-  {#if content.trim() === ''}
+<div class="preview-panel overflow-y-auto h-full"
+      bind:this={panelEl}
+      style="background-color: var(--preview-bg); color: var(--text);">
+   {#if content.trim() === ''}
     <div class="p-8 text-center" style="color: var(--muted);">
       <p>Preview will appear here.</p>
       <p class="text-sm mt-2">Start typing Markdown or LaTeX in the editor.</p>

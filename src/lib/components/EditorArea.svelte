@@ -88,7 +88,7 @@
         updateListener,
         EditorView.theme({
           '&': {
-            backgroundColor: 'var(--bg)',
+            backgroundColor: 'var(--editor-bg)',
             color: 'var(--text)',
           },
           '.cm-content': {
