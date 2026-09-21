@@ -10,6 +10,7 @@
     onToggleWordWrap,
     onToggleTheme,
     onOpenSettings,
+    onHelp,
     recentFiles,
     onOpenRecent,
     showPreview,
@@ -27,6 +28,7 @@
     onToggleWordWrap: () => void;
     onToggleTheme: () => void;
     onOpenSettings: () => void;
+    onHelp: () => void;
     recentFiles: string[];
     onOpenRecent: (path: string) => void;
     showPreview: boolean;
@@ -159,6 +161,14 @@
     <button class="px-3 py-1 rounded hover:bg-[var(--hover-bg)]"
             onclick={() => { onOpenSettings(); closeMenu(); }}>
       Settings
+    </button>
+  </div>
+
+  <!-- Help -->
+  <div class="relative">
+    <button class="px-3 py-1 rounded hover:bg-[var(--hover-bg)]"
+            onclick={() => { onHelp(); closeMenu(); }}>
+      Help
     </button>
   </div>
 </nav>

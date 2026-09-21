@@ -1,14 +1,14 @@
-# NoteForge v0.3.0
+# NoteForge v0.4.0
 
-Desktop polish and custom shell
+Premium editing and export experience
 
 ## Highlights
 
-- Custom frameless titlebar and app icon
-- JetBrains Mono focused visual system
-- Improved dark-theme contrast
-- Ctrl+scroll workspace zoom
-- Release-size optimizations
+- Document-style print/PDF layout
+- Custom context menu
+- Integrated help and keyboard-shortcut overlay
+- Improved selection behavior and global shortcuts
+- Refined titlebar interaction and theme consistency
 
 ## Requirements
 
