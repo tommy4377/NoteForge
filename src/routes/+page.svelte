@@ -18,6 +18,8 @@
   import SettingsPanel from '$lib/components/SettingsPanel.svelte';
   import FileChangedNotification from '$lib/components/FileChangedNotification.svelte';
   import GoToLine from '$lib/components/GoToLine.svelte';
+  import ContextMenu from '$lib/components/ContextMenu.svelte';
+  import HelpOverlay from '$lib/components/HelpOverlay.svelte';
 
   // Reactive state via writable stores (imported with $ syntax)
   let tabs = $state<TabState[]>([]);
@@ -29,6 +31,8 @@
   // Local UI state
   let showSettings = $state(false);
   let showGoToLine = $state(false);
+  let showHelp = $state(false);
+  let contextMenuState = $state<{ visible: boolean; x: number; y: number }>({ visible: false, x: 0, y: 0 });
   let editorView = $state<import('@codemirror/view').EditorView | null>(null);
   let editorScrollPercent = $state(0);
 
@@ -434,6 +438,19 @@
     showGoToLine = !showGoToLine;
   }
 
+  function openHelpPanel() {
+    showHelp = true;
+  }
+
+  function handleContextMenu(e: MouseEvent) {
+    e.preventDefault();
+    contextMenuState = { visible: true, x: e.clientX, y: e.clientY };
+  }
+
+  function closeContextMenu() {
+    contextMenuState = { ...contextMenuState, visible: false };
+  }
+
   // =====================
   // File Changed Notification
   // =====================
@@ -521,6 +538,16 @@
       e.preventDefault();
       toggleGoToLine();
     }
+    // Ctrl+A — Select All (ensure it works even when editor isn't focused)
+    if (ctrl && !e.shiftKey && e.key === 'a') {
+      e.preventDefault();
+      if (editorView) {
+        editorView.dispatch({ selection: { anchor: 0, head: editorView.state.doc.length } });
+        editorView.focus();
+      } else if (document.activeElement instanceof HTMLInputElement || document.activeElement instanceof HTMLTextAreaElement) {
+        (document.activeElement as HTMLInputElement | HTMLTextAreaElement).select();
+      }
+    }
     // Ctrl++ — Zoom in (increase font size)
     if (ctrl && !e.shiftKey && (e.key === '=' || e.key === '+')) {
       e.preventDefault();
@@ -573,107 +600,4 @@
   }
 </script>
 
-<svelte:window onkeydown={handleKeydown} />
-
-<div
-  class="app-shell flex flex-col h-screen overflow-hidden"
-  style="color: var(--text);"
-  role="application"
->
-  {#if isDragging}
-    <div class="fixed inset-0 z-40 flex items-center justify-center pointer-events-none"
-         style="background-color: rgba(0, 102, 204, 0.1); border: 3px dashed var(--accent);">
-      <span class="text-lg font-semibold" style="color: var(--accent);">Drop file to open</span>
-    </div>
-  {/if}
-
-  <MenuBar
-    onNew={handleNew}
-    onOpen={handleOpen}
-    onSave={handleSave}
-    onSaveAs={handleSaveAs}
-    onExportPdf={handleExportPdf}
-    onTogglePreview={togglePreview}
-    onToggleFindReplace={toggleFindReplace}
-    onToggleWordWrap={toggleWordWrap}
-    onToggleTheme={cycleTheme}
-    onOpenSettings={openSettingsPanel}
-    recentFiles={recentFiles}
-    onOpenRecent={handleOpenRecent}
-    showPreview={settings.showPreview}
-    showFindReplace={settings.showFindReplace}
-    wordWrap={settings.wordWrap}
-    currentTheme={settings.theme}
-  />
-
-  <TabBar
-    tabs={tabs}
-    activeTabId={activeTabId}
-    onSwitchTab={(id) => { activeTabId = id; }}
-    onCloseTab={handleCloseTab}
-    onNewTab={handleNew}
-  />
-
-  <div class="flex flex-1 min-h-0">
-    {#if activeTab}
-      <div class="flex flex-col flex-1 min-w-0">
-        <div class="flex flex-1 min-h-0">
-          <div class="editor-wrapper flex-1 min-w-0 overflow-hidden" style="background-color: var(--editor-bg);">
-            <EditorArea
-              content={activeContent}
-              language={activeLanguage}
-              wordWrap={settings.wordWrap}
-              onContentChange={handleContentChange}
-              theme={settings.theme}
-              onViewReady={handleEditorViewCreated}
-              onScrollChange={(pct) => { editorScrollPercent = pct; }}
-            />
-          </div>
-          {#if settings.showPreview}
-            <div class="divider-vertical" style="background-color: var(--divider-color);"></div>
-            <div class="w-1/2 min-w-0 overflow-hidden" style="background-color: var(--preview-bg);">
-              <PreviewPanel content={activeContent} scrollPercent={editorScrollPercent} />
-            </div>
-          {/if}
-        </div>
-
-        <FindReplace
-          visible={settings.showFindReplace}
-          editorView={editorView}
-          onClose={toggleFindReplace}
-        />
-      </div>
-    {:else}
-      <div class="flex-1 flex items-center justify-center" style="color: var(--muted);">
-        <div class="text-center">
-          <p class="text-lg mb-2">Welcome to NoteForge</p>
-          <p class="text-sm">Open a file or press Ctrl+N to create a new one.</p>
-        </div>
-      </div>
-    {/if}
-  </div>
-
-  <StatusBar
-    wordCount={wordCount}
-    charCount={charCount}
-    encoding={activeEncoding}
-    lineEnding={activeLineEnding}
-  />
-
-  <SettingsPanel
-    visible={showSettings}
-    onClose={() => { showSettings = false; }}
-  />
-
-  <FileChangedNotification
-    notification={fileChangedNotif}
-    onReload={handleReloadFile}
-    onIgnore={handleIgnoreFileChange}
-  />
-
-  <GoToLine
-    visible={showGoToLine}
-    editorView={editorView}
-    onClose={toggleGoToLine}
-  />
-</div>
+<svelte:window onkeydown={handleKeydown} oncontextmenu={handleContextMenu} />

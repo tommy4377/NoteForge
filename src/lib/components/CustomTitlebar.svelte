@@ -121,6 +121,8 @@
     gap: 8px;
     flex-shrink: 0;
     -webkit-app-region: no-drag;
+    z-index: 10;
+    position: relative;
   }
 
   .titlebar-btn {
@@ -136,6 +138,7 @@
     justify-content: center;
     line-height: 1;
     -webkit-app-region: no-drag;
+    pointer-events: auto;
   }
 
   .minimize-btn {
