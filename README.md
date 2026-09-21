@@ -1,14 +1,15 @@
-# NoteForge v0.4.0
+# NoteForge
 
-Premium editing and export experience
+A lightweight desktop text and Markdown editor built with Svelte 5, CodeMirror 6, Rust and Tauri 2.
 
 ## Highlights
 
-- Document-style print/PDF layout
-- Custom context menu
-- Integrated help and keyboard-shortcut overlay
-- Improved selection behavior and global shortcuts
-- Refined titlebar interaction and theme consistency
+- Multi-tab editor with dirty-state tracking and session restore
+- Markdown, LaTeX and syntax-highlighted preview
+- Open/save, recent files, autosave and external-change detection
+- Find/replace, go-to-line, word wrap and editor/workspace zoom
+- Light, dark and sepia themes with a custom desktop titlebar
+- Print/PDF document mode plus custom context menu and shortcut help
 
 ## Requirements
 

@@ -123,6 +123,7 @@
     -webkit-app-region: no-drag;
     z-index: 10;
     position: relative;
+    padding-right: 8px;
   }
 
   .titlebar-btn {
@@ -139,6 +140,16 @@
     line-height: 1;
     -webkit-app-region: no-drag;
     pointer-events: auto;
+    transition: opacity 0.15s, transform 0.15s;
+  }
+
+  .titlebar-btn:hover {
+    opacity: 0.85;
+    transform: scale(1.1);
+  }
+
+  .titlebar-btn:active {
+    transform: scale(0.95);
   }
 
   .minimize-btn {
@@ -153,9 +164,14 @@
     background-color: #FF5F57;
   }
 
+  .close-btn:hover {
+    background-color: #FF5F57;
+    opacity: 1;
+  }
+
   .btn-icon {
     display: none;
-    font-size: 8px;
+    font-size: 14px;
     font-weight: 700;
     color: rgba(0, 0, 0, 0.6);
     line-height: 1;
